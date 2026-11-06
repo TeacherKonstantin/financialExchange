@@ -25,24 +25,26 @@ func main(){
 	// logger.Info("Работа с валютами:",
 	//  slog.Int("Количество уникальных комбинаций", lengthOfCurrencies))
 
-	traderStore := storage.NewStore[uuid.UUID, float64](10)
-	traderID := uuid.NewV7()
+	// traderStore := storage.NewStore[uuid.UUID, float64](10)
+	// traderID := uuid.NewV7()
 
-	traderStore.Put(traderID, 50000.0004)
-	logger.Info("Новый трейдер добавлен в хранилище:",
-	 slog.String("UUID", traderID.String()),
-	slog.Float64("Начальный баланс", 50000.0004))
+	// traderStore.Put(traderID, 50000.0004)
+	// logger.Info("Новый трейдер добавлен в хранилище:",
+	//  slog.String("UUID", traderID.String()),
+	// slog.Float64("Начальный баланс", 50000.0004))
 
 
-	if balance, ok := traderStore.Get(traderID); ok{
-		logger.Info("поиск в хранилище:",
-	 	slog.String("найден трейдер с UUID", traderID.String()),
-		slog.Float64("его текущий баланс", balance))
-	}else{
-		logger.Error("элемент не найден в хранилище:",
-	 	slog.String("проверьте UUID", traderID.String()),)
-	}
+	// if balance, ok := traderStore.Get(traderID); ok{
+	// 	logger.Info("поиск в хранилище:",
+	//  	slog.String("найден трейдер с UUID", traderID.String()),
+	// 	slog.Float64("его текущий баланс", balance))
+	// }else{
+	// 	logger.Error("элемент не найден в хранилище:",
+	//  	slog.String("проверьте UUID", traderID.String()),)
+	// }
 
+	orderBook := storage.NewIndexedStorage[uuid.UUID, Order](100)
+	
 
 	fmt.Scanln()
 

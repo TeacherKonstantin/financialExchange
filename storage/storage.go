@@ -1,6 +1,9 @@
 package storage
 
-import "sync"
+import (
+	"sync"
+	"fmt"	
+)
 
 // sync.Mutex полностью блокирует доступ и для чтения и для записи. 
 // RWMutex позволяет потокам читать данные одновременно, но запись осуществляется только одним потоком
@@ -62,6 +65,28 @@ type IndexedStorage[K comparable, V any] struct {
 	order []K
 	byKey map[K]int	//Позволяет за О(1) узнать порядок ключа в срезе
 	data map[K]V	//Хранилище значений по ключу
+}
+
+func NewIndexedStorage[K comparable, V any](capacity int) *IndexedStorage[K , V]{
+	return &IndexedStorage[K, V]{
+		order: make([]K, 0, capacity),
+		byKey: make(map[K]int, capacity),
+		data: make(map[K]V, capacity),
+	}
+}
+
+func (storage *IndexedStorage[K, V]) Put(key K, newValue V){
+	storage.mutex.Lock()
+	defer storage.mutex. Unlock()
+
+	if _, ok := storage.data[key]; ok{
+		storage.data[key] = newValue
+		// fmt.Println("Значение изменено с".value."на")
+		return
+	}
+	storage.byKey[key] = len(storage.order)
+	storage.order = append(storage.order, key)
+	storage.data[key] = newValue
 }
 
 func (indexStore *IndexedStorage[K, V]) Ordered() []V{
