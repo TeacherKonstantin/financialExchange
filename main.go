@@ -2,10 +2,12 @@ package main
 
 import (
 	"financialExchange/storage"
+	"financialExchange/enum"
 	"fmt"
 	"log/slog"
 	"os"
 	"uuid"
+	"time"
 )
 
 func main(){
@@ -43,8 +45,49 @@ func main(){
 	//  	slog.String("проверьте UUID", traderID.String()),)
 	// }
 
-	orderBook := storage.NewIndexedStorage[uuid.UUID, Order](100)
-	
+	orderBook := storage.NewIndexedStorage[uuid.UUID, enum.Order](100)
+
+	uuidOrder1 := uuid.NewV7()
+	uuidOrder2 := uuid.NewV7()
+
+	orderBuy := 	enum.Order{
+						ID: uuidOrder1,
+						TraderID: uuid.NewV4(),
+						Side: enum.SideBuy,
+						Type: enum.OrderTypeLimit,
+						Symbo: "USD",
+						Price: 1000.00,
+						Quantity: 2.00,
+						Filled: 0.00,
+						Status: enum.OrderStatusNew,
+						CreatedAt: time.Now().UTC(),
+						UpdatedAt: time.Now().UTC(),
+							}
+
+	orderSell := 	enum.Order{
+						ID: uuidOrder2,
+						TraderID: uuid.NewV4(),
+						Side: enum.SideSell,
+						Type: enum.OrderTypeLimit,
+						Symbo: "USD",
+						Price: 1000.00,
+						Quantity: 2.00,
+						Filled: 0.00,
+						Status: enum.OrderStatusNew,
+						CreatedAt: time.Now().UTC(),
+						UpdatedAt: time.Now().UTC(),
+						}
+
+	orderBook.Put(uuidOrder1, orderBuy)
+	orderBook.Put(uuidOrder2, orderSell)
+
+	logger.Info("Зарегистрирована сделка",
+			slog.String("Type", orderBuy.Type.String()),
+			slog.Float64("Value:", orderBuy.Price),
+			slog.Float64("Quantity", orderBuy.Quantity),
+			slog.String("Symbo", orderBuy.Symbo),
+			slog.String("TraderID", orderBuy.TraderID.String()))
+								
 
 	fmt.Scanln()
 

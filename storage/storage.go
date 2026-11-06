@@ -2,7 +2,6 @@ package storage
 
 import (
 	"sync"
-	"fmt"	
 )
 
 // sync.Mutex полностью блокирует доступ и для чтения и для записи. 
