@@ -78,7 +78,7 @@ func (storage *IndexedStorage[K, V]) Put(key K, newValue V){
 	storage.mutex.Lock()
 	defer storage.mutex. Unlock()
 
-	if _, ok := storage.data[key]; ok{
+	if _, ok := storage.byKey[key]; ok{
 		storage.data[key] = newValue
 		// fmt.Println("Значение изменено с".value."на")
 		return
@@ -86,6 +86,29 @@ func (storage *IndexedStorage[K, V]) Put(key K, newValue V){
 	storage.byKey[key] = len(storage.order)
 	storage.order = append(storage.order, key)
 	storage.data[key] = newValue
+}
+
+func (storage *IndexedStorage[K, V]) Delete(key K) bool {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
+
+	indexInSlice, ok := storage.byKey[key]
+	if !ok{
+		return false
+	}
+	lastIndex := len(storage.order) - 1
+
+	if indexInSlice != lastIndex {
+	lastIndex := storage.order[lastIndex]  //Получает последний элемент среза order
+	storage.order[indexInSlice] = lastIndex  //Заменяет удаляемый элемент на последний элемент среза order
+	storage.byKey[lastIndex] = indexInSlice  //Обновляет индекс последнего элемента в мапе byKey
+	}
+
+	storage.order = storage.order[:lastIndex]  //Удаляет последний элемент из среза order
+	delete(storage.byKey, key)//Удаляет ключ из мапы byKey
+	delete(storage.data, key)  //Удаляет ключ из мапы data
+
+	return true
 }
 
 func (indexStore *IndexedStorage[K, V]) Ordered() []V{
