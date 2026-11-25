@@ -26,14 +26,14 @@ func (store *Store[K, V]) Put(key K, value V) {
 }
 
 func (store *Store[K, V]) Get(key K) (V, bool) {
-	store.mutex.Lock()
-	defer store.mutex.Unlock()
+	store.mutex.RLock()
+	defer store.mutex.RUnlock()
 
 	value, ok := store.items[key]
 	return value, ok
 }
-
-func (store *Store[K, V]) Delete(key K, value V) bool {
+// удалил лишний аргумент
+func (store *Store[K, V]) Delete(key K) bool {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	
@@ -44,6 +44,7 @@ func (store *Store[K, V]) Delete(key K, value V) bool {
 	delete(store.items, key)
 	return true
 }
+
 
 func (store *Store[K, V]) Update(key K, modif func(V) V) (V, bool) {
 	store.mutex.Lock()
@@ -56,10 +57,13 @@ func (store *Store[K, V]) Update(key K, modif func(V) V) (V, bool) {
 	}
 
 	UpdatedValue := modif(value)
+	store.items[key] = UpdatedValue
+
 	return UpdatedValue, true
 }
 
 type IndexedStorage[K comparable, V any] struct {
+	//требует уточнения
 	mutex sync.RWMutex
 	order []K
 	byKey map[K]int	//Позволяет за О(1) узнать порядок ключа в срезе
@@ -123,6 +127,7 @@ func (indexStore *IndexedStorage[K, V]) Ordered() []V{
 }
 
 type Storage[T comparable] struct{
+	mutex sync.RWMutex
 	storage map[T]struct{}
 }//хранение универсальных множеств
 
@@ -134,10 +139,6 @@ func NewStorage[T comparable](capacity int) *Storage[T] {
 
 func (s *Storage[T]) Add(item T) {
 	s.storage[item] = struct{}{}
-}
-
-func (s *Storage[T]) Set(value T) {
-	s.storage[value] = struct{}{}
 }
 
 func (s *Storage[T]) Remove(value T) {
