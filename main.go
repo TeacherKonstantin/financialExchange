@@ -65,10 +65,60 @@ func main(){
 
 	fmt.Scanln()
 
-	orderBook.Update(uuidOrder1,  modifiers.ModifierForOrder(orderSell.Quantity))
-	orderBook.Update(uuidOrder2,  modifiers.ModifierForOrder(orderBuy.Quantity))
+	matchOrders(orderBook, orderBuy.ID, orderSell.ID, logger)
+
+	// orderBook.Update(uuidOrder1,  modifiers.ModifierForOrder(orderSell.Quantity))
+	// orderBook.Update(uuidOrder2,  modifiers.ModifierForOrder(orderBuy.Quantity))
 
 	
 	fmt.Scanln()
+
+}
+
+func matchOrders(storage *storage.Store[uuid.UUID, enum.Order], buyID, sellID uuid.UUID, logger *slog.Logger){
+	buyOrder, buyOk := storage.Get(buyID)
+	sellOrder, sellOk := storage.Get(sellID)
+
+	if !buyOk || !sellOk{
+		logger.Error("Возникли ошибки с поиском заказов в хранилище")
+		return
+	}
+
+	if buyOrder.Symbo != sellOrder.Symbo{
+		logger.Warn("Сделка не может быть осуществлена в связи несовпадением валют")
+		return
+	}
+	
+	if buyOrder.Status == enum.OrderStatusFilled || sellOrder.Status == enum.OrderStatusFilled{
+		logger.Warn("Заказы уже завершены")
+		return
+	}
+
+	if buyOrder.Price < sellOrder.Price{
+		logger.Info("Сделка не может быть совершена из-за несовпадения цен")
+		return
+	}
+
+	quantityTrade := min(buyOrder.Remaining(), sellOrder.Remaining())
+
+	updatedBuyOrder, ok:= storage.Update(buyID, modifiers.ModifierForOrder(quantityTrade))
+
+	if !ok{
+		logger.Error("Произошла ошибка при обновлении buyOrder")
+	}
+
+	updatedSellOrder, ok:= storage.Update(sellID, modifiers.ModifierForOrder(quantityTrade))
+
+	if !ok{
+		logger.Error("Произошла ошибка при обновлении sellOrder")
+	}
+
+	logger.Info("Заявки обнавлены", "buy_order", updatedBuyOrder, "sell_order", updatedSellOrder)
+
+	logger.Info("Сделка успешно проведена",
+				slog.Float64("quantity", quantityTrade),
+				slog.Any("buy_order", updatedBuyOrder),
+				slog.Any("sell_order", updatedSellOrder),
+	)	
 
 }
